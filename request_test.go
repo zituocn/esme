@@ -6,10 +6,11 @@ import (
 )
 
 func Test_RequestAndResponse(t *testing.T) {
-	ctx := DoRequest("https://test.api.ymzy.cn/static_service/v1/allow/index/info", "GET", "application/json", nil)
+	ctx := HTTPGet("https://tenapi.cn/douyinresou/")
 	ctx.SetSucceedFunc(func(c *Context){
-		fmt.Println("数据成功了.....")
+		fmt.Println("数据获取成功了...")
 	})
+	ctx.Do()
 	str := ctx.ToString()
 	fmt.Println(str)
 }
