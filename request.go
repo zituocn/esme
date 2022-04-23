@@ -1,22 +1,24 @@
+/*
+request.go
+http请求的相关
+sam
+*/
+
 package esme
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/zituocn/gow/lib/logy"
-	"golang.org/x/net/publicsuffix"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
 	burl "net/url"
 	"time"
-)
 
-/*
-http_request.go
-http请求的相关
-*/
+	"github.com/zituocn/gow/lib/logy"
+	"golang.org/x/net/publicsuffix"
+)
 
 type Header map[string]string
 
@@ -40,28 +42,24 @@ func (h Header) Delete(key string) Header {
 	return h
 }
 
-// RequestTimeOut request 请求超时
-//	毫秒
-type RequestTimeOut int
-
 type Cookie struct {
 	Name     string
 	Value    string
 	HttpOnly bool
 }
 
-// HTTPGet 执行一个http get请求
-func HTTPGet(url string, vs ...interface{}) *Context {
+// HttpGet 执行一个http get请求
+func HttpGet(url string, vs ...interface{}) *Context {
 	return DoRequest(url, "GET", vs...)
 }
 
-// HTTPPost 执行一个http post请求
-func HTTPPost(url string, vs ...interface{}) *Context {
+// HttpPost 执行一个http post请求
+func HttpPost(url string, vs ...interface{}) *Context {
 	return DoRequest(url, "POST", vs...)
 }
 
-// HTTPPut 执行一个http put请求
-func HTTPPut(url string, data []byte, vs ...interface{}) *Context {
+// HttpPut 执行一个http put请求
+func HttpPut(url string, data []byte, vs ...interface{}) *Context {
 	return DoRequest(url, "PUT", vs...)
 }
 
@@ -125,8 +123,7 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 func NewContext(req *http.Request, vs ...interface{}) *Context {
 
 	var (
-		client         *http.Client
-		requestTimeOut RequestTimeOut
+		client *http.Client
 	)
 
 	for _, v := range vs {
@@ -138,9 +135,11 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 				}
 			}
 		case *http.Header:
-			for key, values := range *vv {
-				for _, value := range values {
-					req.Header.Add(key, value)
+			if vv != nil {
+				for key, values := range *vv {
+					for _, value := range values {
+						req.Header.Add(key, value)
+					}
 				}
 			}
 		case Header:
@@ -167,10 +166,8 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 					HttpOnly: cookie.HttpOnly,
 				})
 			}
-		case RequestTimeOut:
-			requestTimeOut = vv
 		case FormData:
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		}
 
 	}
@@ -179,13 +176,10 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 		client = getDefaultClient()
 	}
 
-	if requestTimeOut > 0 {
-		client.Timeout = time.Duration(requestTimeOut) * time.Millisecond
-	}
-
 	// set transport
 	client.Transport = getDefaultTransport()
 
+	// cookie jar
 	options := cookiejar.Options{
 		PublicSuffixList: publicsuffix.List,
 	}
@@ -232,10 +226,9 @@ func getDefaultTransport() *http.Transport {
 }
 
 func validUrl(urlStr string) (string, error) {
-
 	length := len(urlStr)
 	if length < 7 {
-		return "", fmt.Errorf("错误的 url : %s", urlStr)
+		return "", fmt.Errorf("error request url : %s", urlStr)
 	}
 
 	if urlStr[:7] == "http://" || urlStr[:8] == "https://" {

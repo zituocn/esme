@@ -6,8 +6,8 @@ import (
 )
 
 func Test_RequestAndResponse(t *testing.T) {
-	ctx := HTTPGet("https://tenapi.cn/douyinresou/")
-	ctx.SetSucceedFunc(func(c *Context){
+	ctx := HttpGet("https://tenapi.cn/douyinresou/")
+	ctx.SetSucceedFunc(func(c *Context) {
 		fmt.Println("数据获取成功了...")
 	})
 	ctx.Do()

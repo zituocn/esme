@@ -1,3 +1,7 @@
+/*
+context.go
+*/
+
 package esme
 
 import (
@@ -6,16 +10,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/zituocn/gow/lib/logy"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-)
+	"time"
 
-/*
-context.go
-*/
+	"github.com/zituocn/gow/lib/logy"
+)
 
 // CallbackFunc 回调函数
 type CallbackFunc func(*Context)
@@ -39,19 +42,19 @@ type Context struct {
 	Err error
 
 	// 请求开始的回调
-	StartFunc CallbackFunc
+	startFunc CallbackFunc
 
 	// 成功的回调
-	SucceedFunc CallbackFunc
+	succeedFunc CallbackFunc
 
 	// 请求失败的回调
-	FailedFunc CallbackFunc
+	failedFunc CallbackFunc
 
 	// 重试的回调
-	RetryFunc CallbackFunc
+	retryFunc CallbackFunc
 
 	// 请求完成的回调
-	CompleteFunc CallbackFunc
+	completeFunc CallbackFunc
 
 	// 请求的任务
 	Task *Task
@@ -60,6 +63,10 @@ type Context struct {
 	RespBody []byte
 
 	Param map[string]interface{}
+
+	sleepTime time.Duration
+
+	isDebug bool
 }
 
 // Do 执行当前请求
@@ -72,6 +79,11 @@ func (c *Context) Do() {
 		bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
 	}
 	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	// 休眠
+	if c.sleepTime > 0 {
+		time.Sleep(c.sleepTime)
+	}
 
 	// 开始执行请求
 	c.Response, c.Err = c.client.Do(c.Request)
@@ -90,6 +102,8 @@ func (c *Context) Do() {
 	if c.Response.Header.Get("Content-Encoding") == "gzip" {
 		c.Response.Body, _ = gzip.NewReader(c.Response.Body)
 	}
+
+	// http response
 	if c.Response != nil {
 		code := c.Response.StatusCode
 		status := GetStatusCodeString(code)
@@ -102,20 +116,20 @@ func (c *Context) Do() {
 			}
 			c.RespBody = body
 			// 回调成功函数
-			if c.SucceedFunc != nil {
-				logy.Infof("[%s] callback -> %s", status, GetFuncName(c.SucceedFunc))
-				c.SucceedFunc(c)
+			if c.succeedFunc != nil {
+				logy.Infof("[%s] callback -> %s", status, GetFuncName(c.succeedFunc))
+				c.succeedFunc(c)
 			}
 		case "retry":
-			if c.RetryFunc != nil {
-				logy.Warnf("[%s] callback -> %s", status, GetFuncName(c.RetryFunc))
-				c.RetryFunc(c)
+			if c.retryFunc != nil {
+				logy.Warnf("[%s] callback -> %s", status, GetFuncName(c.retryFunc))
+				c.retryFunc(c)
 				c.Do()
 			}
 		case "fail":
-			if c.FailedFunc != nil {
-				logy.Errorf("[%s] callback -> %s", status, GetFuncName(c.FailedFunc))
-				c.FailedFunc(c)
+			if c.failedFunc != nil {
+				logy.Errorf("[%s] callback -> %s", status, GetFuncName(c.failedFunc))
+				c.failedFunc(c)
 			}
 		default:
 			logy.Warnf("Unhandled status code: %d", code)
@@ -123,23 +137,47 @@ func (c *Context) Do() {
 
 	}
 
+	if c.isDebug {
+		c.debugPrint()
+	}
+
+}
+
+// SetIsDebug set is debug
+//	if isDebug is true , print http debug
+func (c *Context) SetIsDebug(isDebug bool) *Context {
+	c.isDebug = isDebug
+	return c
+}
+
+// SetSleepTime set request sleep time
+func (c *Context) SetSleepTime(sleepTime int) *Context {
+	c.sleepTime = time.Duration(sleepTime * int(time.Millisecond))
+	return c
+}
+
+// SetTimeOut http request timeout
+//	milli second 毫秒
+func (c *Context) SetTimeOut(timeout int) *Context {
+	c.client.Timeout = time.Duration(timeout * int(time.Millisecond))
+	return c
 }
 
 // SetSucceedFunc 设置成功后的回调
 func (c *Context) SetSucceedFunc(fn CallbackFunc) *Context {
-	c.SucceedFunc = fn
+	c.succeedFunc = fn
 	return c
 }
 
 // SetFailedFunc 设置失败后的回调
 func (c *Context) SetFailedFunc(fn CallbackFunc) *Context {
-	c.FailedFunc = fn
+	c.failedFunc = fn
 	return c
 }
 
 // SetRetryFunc 设置重试的回调
 func (c *Context) SetRetryFunc(fn CallbackFunc) *Context {
-	c.RetryFunc = fn
+	c.retryFunc = fn
 	return c
 }
 
@@ -187,6 +225,13 @@ func (c *Context) ToHTML() string {
 	).Replace(s)
 }
 
-func (c *Context) reset() {
+// debugPrint print request and response detail
+func (c *Context) debugPrint() {
 
+	fmt.Println("method =", c.Request.Method)
+	fmt.Println("url =", c.Request.URL)
+
+}
+
+func (c *Context) reset() {
 }
