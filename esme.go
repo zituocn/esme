@@ -3,7 +3,7 @@ package esme
 import (
 	"sync"
 
-	"github.com/zituocn/gow/lib/logy"
+	"github.com/zituocn/esme/logx"
 )
 
 // Job 任务
@@ -34,7 +34,10 @@ type JobOptions struct {
 	// FailedFunc 失败后的回调
 	FailedFunc CallbackFunc
 
-	// SheepTime http 执行的休眠时间
+	// ProxyIP 代理IP
+	ProxyIP string
+
+	// SheepTime http 请求 执行的休眠时间
 	SheepTime int
 
 	// TimeOut http 请求超时时间
@@ -61,13 +64,13 @@ func NewJob(name string, num int, queue TodoQueue, options JobOptions) *Job {
 // Do 开始执行任务
 func (j *Job) Do() {
 
-	logy.Infof("[%s] 开始执行 -> 协程数: %d ", j.name, j.num)
+	logx.Infof("[%s] 开始执行 -> 协程数: %d ", j.name, j.num)
 
 	var wg sync.WaitGroup
 	for n := 0; n < j.num; n++ {
 		wg.Add(1)
 		go func(i int) {
-			logy.Infof("启动第 %d 个任务", i+1)
+			logx.Infof("启动第 %d 个任务", i+1)
 			defer wg.Done()
 			for {
 				if j.queue.IsEmpty() {
@@ -82,16 +85,16 @@ func (j *Job) Do() {
 					SetFailedFunc(j.jobOptions.FailedFunc).
 					SetIsDebug(j.jobOptions.IsDebug).
 					SetTimeOut(j.jobOptions.TimeOut).
-					SetSleepTime(j.jobOptions.SheepTime)
+					SetSleepTime(j.jobOptions.SheepTime).
+					SetProxy(j.jobOptions.ProxyIP)
 
 				// 执行请求
 				ctx.Do()
-
 			}
 
 		}(n)
 	}
 	wg.Wait()
 
-	logy.Infof("任务执行结束")
+	logx.Infof("任务执行结束")
 }

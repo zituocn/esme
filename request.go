@@ -16,8 +16,13 @@ import (
 	burl "net/url"
 	"time"
 
-	"github.com/zituocn/gow/lib/logy"
+	"github.com/zituocn/esme/logx"
 	"golang.org/x/net/publicsuffix"
+)
+
+const (
+	defaultContentType = "text/html; charset=utf-8"
+	defaultUserAgent   = "Go-http-client/esme/1.0"
 )
 
 type Header map[string]string
@@ -69,7 +74,7 @@ func HttpPut(url string, data []byte, vs ...interface{}) *Context {
 func DoRequest(url, method string, vs ...interface{}) *Context {
 	ctx, err := NewRequest(url, method, vs...)
 	if err != nil {
-		logy.Errorf("DoRequest 错误 :%v", err)
+		logx.Errorf("DoRequest 错误 :%v", err)
 		return nil
 	}
 	return ctx
@@ -94,13 +99,15 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 	for _, v := range vs {
 		switch vv := v.(type) {
 		case FormData:
-			formData := burl.Values{}
-			for k, v := range vv {
-				formData.Add(k, v)
-			}
-			req, err = http.NewRequest(method, u, bytes.NewBuffer([]byte(formData.Encode())))
-			if err != nil {
-				return nil, err
+			if len(vv) > 0 {
+				formData := burl.Values{}
+				for k, v := range vv {
+					formData.Add(k, v)
+				}
+				req, err = http.NewRequest(method, u, bytes.NewBuffer([]byte(formData.Encode())))
+				if err != nil {
+					return nil, err
+				}
 			}
 		case []byte:
 			{
@@ -167,7 +174,9 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 				})
 			}
 		case FormData:
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			if len(vv) > 0 {
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			}
 		}
 
 	}
@@ -191,6 +200,14 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 	//decode gzip
 	if length := req.Header.Get("Content-Length"); length != "" {
 		req.ContentLength = Str2Int64(length)
+	}
+
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", defaultContentType)
+	}
+
+	if req.Header.Get("User-Agent") == "" || req.Header.Get("User-Agent") == "Go-http-client/2.0" {
+		req.Header.Set("User-Agent", defaultUserAgent)
 	}
 
 	return &Context{

@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zituocn/gow/lib/logy"
+	"github.com/zituocn/esme/logx"
 )
 
 // CallbackFunc 回调函数
@@ -88,7 +88,7 @@ func (c *Context) Do() {
 	// 开始执行请求
 	c.Response, c.Err = c.client.Do(c.Request)
 	if c.Err != nil {
-		logy.Errorf("请求出错: %v", c.Err)
+		logx.Errorf("请求出错: %v", c.Err)
 		return
 	}
 
@@ -111,28 +111,28 @@ func (c *Context) Do() {
 		case "success":
 			body, err := ioutil.ReadAll(c.Response.Body)
 			if err != nil {
-				logy.Errorf("读取 response body error : %v", err)
+				logx.Errorf("读取 response body error : %v", err)
 				return
 			}
 			c.RespBody = body
 			// 回调成功函数
 			if c.succeedFunc != nil {
-				logy.Infof("[%s] callback -> %s", status, GetFuncName(c.succeedFunc))
+				logx.Infof("[%s] callback -> %s", status, GetFuncName(c.succeedFunc))
 				c.succeedFunc(c)
 			}
 		case "retry":
 			if c.retryFunc != nil {
-				logy.Warnf("[%s] callback -> %s", status, GetFuncName(c.retryFunc))
+				logx.Warnf("[%s] callback -> %s", status, GetFuncName(c.retryFunc))
 				c.retryFunc(c)
 				c.Do()
 			}
 		case "fail":
 			if c.failedFunc != nil {
-				logy.Errorf("[%s] callback -> %s", status, GetFuncName(c.failedFunc))
+				logx.Errorf("[%s] callback -> %s", status, GetFuncName(c.failedFunc))
 				c.failedFunc(c)
 			}
 		default:
-			logy.Warnf("Unhandled status code: %d", code)
+			logx.Warnf("Unhandled status code: %d", code)
 		}
 
 	}
@@ -143,20 +143,19 @@ func (c *Context) Do() {
 
 }
 
-// SetIsDebug set is debug
-//	if isDebug is true , print http debug
+// SetIsDebug 设置是否打印debug信息
 func (c *Context) SetIsDebug(isDebug bool) *Context {
 	c.isDebug = isDebug
 	return c
 }
 
-// SetSleepTime set request sleep time
+// SetSleepTime 设置http请求的休眠时间
 func (c *Context) SetSleepTime(sleepTime int) *Context {
 	c.sleepTime = time.Duration(sleepTime * int(time.Millisecond))
 	return c
 }
 
-// SetTimeOut http request timeout
+// SetTimeOut 设置http请求的超时时间
 //	milli second 毫秒
 func (c *Context) SetTimeOut(timeout int) *Context {
 	c.client.Timeout = time.Duration(timeout * int(time.Millisecond))
@@ -181,8 +180,11 @@ func (c *Context) SetRetryFunc(fn CallbackFunc) *Context {
 	return c
 }
 
-// SetProxy set http proxy
+// SetProxy 设置 http 代理
 func (c *Context) SetProxy(httpProxy string) {
+	if httpProxy == "" {
+		return
+	}
 	proxy, _ := url.Parse(httpProxy)
 	c.client.Transport = &http.Transport{
 		Proxy: http.ProxyURL(proxy),
@@ -228,10 +230,17 @@ func (c *Context) ToHTML() string {
 // debugPrint print request and response detail
 func (c *Context) debugPrint() {
 
-	fmt.Println("method =", c.Request.Method)
-	fmt.Println("url =", c.Request.URL)
+	fmt.Printf("%s %v \n", leftText("URL:"), c.Request.URL)
+	fmt.Printf("%s %v \n", leftText("Method:"), c.Request.Method)
+	fmt.Printf("%s %v \n", leftText("Request Header:"), c.Request.Header)
+	fmt.Printf("%s %v \n", leftText("Response code:"), c.Response.StatusCode)
+	fmt.Printf("%s %v \n", leftText("Response Header:"), c.Response.Header)
 
 }
 
 func (c *Context) reset() {
+}
+
+func leftText(s string) string {
+	return fmt.Sprintf("%15s", s)
 }
