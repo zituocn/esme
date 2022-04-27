@@ -10,7 +10,7 @@ var (
 )
 
 func init() {
-	std = NewLogger(WithColor(NewWriter(os.Stdout)), StdFlags, DEBUG)
+	std = NewLogger(WithColor(NewWriter(os.Stdout)), StdFlags, debug)
 	std.SetCalldepth(std.GetCallDepth() + 1)
 }
 

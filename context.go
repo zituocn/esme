@@ -73,6 +73,7 @@ type Context struct {
 func (c *Context) Do() {
 	var (
 		bodyBytes []byte
+		err       error
 	)
 
 	if c.Request.Body != nil {
@@ -84,6 +85,9 @@ func (c *Context) Do() {
 	if c.sleepTime > 0 {
 		time.Sleep(c.sleepTime)
 	}
+
+	// 执行开始请求的回调
+	c.startFunc(c)
 
 	// 开始执行请求
 	c.Response, c.Err = c.client.Do(c.Request)
@@ -100,21 +104,25 @@ func (c *Context) Do() {
 
 	// gzip decode
 	if c.Response.Header.Get("Content-Encoding") == "gzip" {
-		c.Response.Body, _ = gzip.NewReader(c.Response.Body)
+		c.Response.Body, err = gzip.NewReader(c.Response.Body)
+		if err != nil {
+			logx.Errorf("unzip failed :%v", err)
+			return
+		}
 	}
 
 	// http response
 	if c.Response != nil {
 		code := c.Response.StatusCode
 		status := GetStatusCodeString(code)
+		body, err := ioutil.ReadAll(c.Response.Body)
+		if err != nil {
+			logx.Errorf("read response body error : %v", err)
+			return
+		}
+		c.RespBody = body
 		switch status {
 		case "success":
-			body, err := ioutil.ReadAll(c.Response.Body)
-			if err != nil {
-				logx.Errorf("读取 response body error : %v", err)
-				return
-			}
-			c.RespBody = body
 			// 回调成功函数
 			if c.succeedFunc != nil {
 				logx.Infof("[%s] callback -> %s", status, GetFuncName(c.succeedFunc))
@@ -137,9 +145,13 @@ func (c *Context) Do() {
 
 	}
 
+	// isDebug print
 	if c.isDebug {
 		c.debugPrint()
 	}
+
+	// 执行请求完成的回调
+	c.completeFunc(c)
 
 }
 
@@ -162,6 +174,18 @@ func (c *Context) SetTimeOut(timeout int) *Context {
 	return c
 }
 
+// SetStartFunc 设置请求开始的回调
+func (c *Context) SetStartFunc(fn CallbackFunc) *Context {
+	c.startFunc = fn
+	return c
+}
+
+// SetCompleteFunc 设置请求完成的回调
+func (c *Context) SetCompleteFunc(fn CallbackFunc) *Context {
+	c.completeFunc = fn
+	return c
+}
+
 // SetSucceedFunc 设置成功后的回调
 func (c *Context) SetSucceedFunc(fn CallbackFunc) *Context {
 	c.succeedFunc = fn
@@ -181,20 +205,39 @@ func (c *Context) SetRetryFunc(fn CallbackFunc) *Context {
 }
 
 // SetProxy 设置 http 代理
-func (c *Context) SetProxy(httpProxy string) {
+func (c *Context) SetProxy(httpProxy string) *Context {
 	if httpProxy == "" {
-		return
+		return c
 	}
 	proxy, _ := url.Parse(httpProxy)
 	c.client.Transport = &http.Transport{
 		Proxy: http.ProxyURL(proxy),
 	}
-
+	return c
 }
 
-// SetProxyFunc set transport func
-func (c *Context) SetProxyFunc(f func() *http.Transport) {
+// SetProxyFunc 设置代理方法
+func (c *Context) SetProxyFunc(f func() *http.Transport) *Context {
 	c.client.Transport = f()
+	return c
+}
+
+// SetProxyLib set proxy lib
+func (c *Context) SetProxyLib(lib *ProxyLib) *Context {
+	if lib == nil {
+		return c
+	}
+	ip, _ := lib.Get()
+	c.SetProxy(ip)
+	return c
+}
+
+// ToByte response body to []byte
+func (c *Context) ToByte() []byte {
+	if c.RespBody != nil {
+		return c.RespBody
+	}
+	return []byte("")
 }
 
 // ToString response body to string
@@ -226,6 +269,10 @@ func (c *Context) ToHTML() string {
 		"&#39;", "'",
 	).Replace(s)
 }
+
+/*
+private
+*/
 
 // debugPrint print request and response detail
 func (c *Context) debugPrint() {

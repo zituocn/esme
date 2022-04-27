@@ -2,4 +2,7 @@ module github.com/zituocn/esme
 
 go 1.16
 
-require golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
+require (
+	github.com/go-redis/redis/v8 v8.11.5
+	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
+)

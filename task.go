@@ -8,26 +8,23 @@ package esme
 
 import (
 	"net/http"
-	"sync"
 )
 
 // Task http Task
 type Task struct {
 
 	// Url 请求地址
-	Url string
+	Url string `json:"url"`
 
-	// 请求方法
-	Method string
+	// Method 请求方法
+	Method string `json:"method"`
 
 	// playload
-	Playload []byte
+	Playload []byte `json:"playload"`
 
 	// FormData
-	FormData FormData
+	FormData FormData `json:"form_data"`
 
-	// header
-	Header *http.Header
-
-	once *sync.Once
+	// header *http.Header
+	Header *http.Header `json:"header"`
 }

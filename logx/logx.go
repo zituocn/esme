@@ -1,3 +1,10 @@
+/*
+logx.go
+esme使用的日志库
+sam
+2022-04-25
+*/
+
 package logx
 
 import (
@@ -24,14 +31,14 @@ const (
 )
 
 const (
-	TEST = iota
-	DEBUG
-	INFO
-	NOTICE
-	WARN
-	ERROR
-	PANIC
-	FATAL
+	test = iota
+	debug
+	info
+	notice
+	warn
+	logError
+	logPanic
+	fatal
 )
 
 var (
@@ -71,54 +78,54 @@ func NewLogger(w Writer, flag, level int) *Logger {
 }
 
 func (log *Logger) Info(format string, v ...interface{}) {
-	if INFO < log.level {
+	if info < log.level {
 		return
 	}
-	log.output(INFO, fmt.Sprintf(format, v...))
+	log.output(info, fmt.Sprintf(format, v...))
 }
 
 func (log *Logger) Debug(format string, v ...interface{}) {
-	if DEBUG < log.level {
+	if debug < log.level {
 		return
 	}
-	log.output(DEBUG, fmt.Sprintf(format, v...))
+	log.output(debug, fmt.Sprintf(format, v...))
 }
 
 func (log *Logger) Notice(format string, v ...interface{}) {
-	if NOTICE < log.level {
+	if notice < log.level {
 		return
 	}
-	log.output(NOTICE, fmt.Sprintf(format, v...))
+	log.output(notice, fmt.Sprintf(format, v...))
 }
 
 func (log *Logger) Error(format string, v ...interface{}) {
-	if ERROR < log.level {
+	if logError < log.level {
 		return
 	}
-	log.output(ERROR, fmt.Sprintf(format, v...))
+	log.output(logError, fmt.Sprintf(format, v...))
 }
 
 func (log *Logger) Warn(format string, v ...interface{}) {
-	if WARN < log.level {
+	if warn < log.level {
 		return
 	}
-	log.output(WARN, fmt.Sprintf(format, v...))
+	log.output(warn, fmt.Sprintf(format, v...))
 }
 
 func (log *Logger) Panic(format string, v ...interface{}) {
-	if PANIC < log.level {
+	if logPanic < log.level {
 		return
 	}
 	s := fmt.Sprintf(format, v...)
-	log.output(PANIC, s)
+	log.output(logPanic, s)
 	panic(s)
 }
 
 func (log *Logger) Fatal(format string, v ...interface{}) {
-	if FATAL < log.level {
+	if fatal < log.level {
 		return
 	}
-	log.output(FATAL, fmt.Sprintf(format, v...))
+	log.output(fatal, fmt.Sprintf(format, v...))
 	os.Exit(-1)
 }
 

@@ -21,13 +21,13 @@ var (
 
 var (
 	logColor = []string{
-		INFO:   white,
-		DEBUG:  purple,
-		NOTICE: green,
-		WARN:   yellow,
-		ERROR:  red,
-		PANIC:  magenta,
-		FATAL:  magenta,
+		info:     white,
+		debug:    purple,
+		notice:   green,
+		warn:     yellow,
+		logError: red,
+		logPanic: magenta,
+		fatal:    magenta,
 	}
 )
 

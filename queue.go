@@ -11,6 +11,9 @@ type TodoQueue interface {
 	// Add 向队列中添加元素
 	Add(task *Task)
 
+	// AddTasks 一次向队列中添加多个元素
+	AddTasks(list []*Task)
+
 	// Pop 弹出并返回一个元素
 	Pop() *Task
 

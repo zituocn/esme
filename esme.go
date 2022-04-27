@@ -9,7 +9,7 @@ import (
 // Job 任务
 type Job struct {
 
-	// name 名称
+	// 任务name 名称
 	name string
 
 	// num 协程数量
@@ -24,6 +24,7 @@ type Job struct {
 
 // JobOptions 任务参数
 type JobOptions struct {
+	StartFunc CallbackFunc
 
 	// SucceedFunc 成功后的回调
 	SucceedFunc CallbackFunc
@@ -34,8 +35,14 @@ type JobOptions struct {
 	// FailedFunc 失败后的回调
 	FailedFunc CallbackFunc
 
+	// CompleteFunc 请求完成的回调
+	CompleteFunc CallbackFunc
+
 	// ProxyIP 代理IP
 	ProxyIP string
+
+	// ProxyLib 代理IP库
+	ProxyLib *ProxyLib
 
 	// SheepTime http 请求 执行的休眠时间
 	SheepTime int
@@ -77,19 +84,23 @@ func (j *Job) Do() {
 					break
 				}
 				task := j.queue.Pop()
+				if task != nil {
+					ctx := DoRequest(task.Url, task.Method, task.Header, task.FormData, task.Playload)
 
-				ctx := DoRequest(task.Url, task.Method, task.Header, task.FormData, task.Playload)
+					ctx.SetStartFunc(j.jobOptions.StartFunc).
+						SetSucceedFunc(j.jobOptions.SucceedFunc).
+						SetRetryFunc(j.jobOptions.RetryFunc).
+						SetFailedFunc(j.jobOptions.FailedFunc).
+						SetCompleteFunc(j.jobOptions.CompleteFunc).
+						SetIsDebug(j.jobOptions.IsDebug).
+						SetTimeOut(j.jobOptions.TimeOut).
+						SetSleepTime(j.jobOptions.SheepTime).
+						SetProxy(j.jobOptions.ProxyIP).
+						SetProxyLib(j.jobOptions.ProxyLib)
 
-				ctx.SetSucceedFunc(j.jobOptions.SucceedFunc).
-					SetRetryFunc(j.jobOptions.RetryFunc).
-					SetFailedFunc(j.jobOptions.FailedFunc).
-					SetIsDebug(j.jobOptions.IsDebug).
-					SetTimeOut(j.jobOptions.TimeOut).
-					SetSleepTime(j.jobOptions.SheepTime).
-					SetProxy(j.jobOptions.ProxyIP)
-
-				// 执行请求
-				ctx.Do()
+					// 执行请求
+					ctx.Do()
+				}
 			}
 
 		}(n)

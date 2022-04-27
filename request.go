@@ -197,7 +197,6 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 		client.Jar = jar
 	}
 
-	//decode gzip
 	if length := req.Header.Get("Content-Length"); length != "" {
 		req.ContentLength = Str2Int64(length)
 	}

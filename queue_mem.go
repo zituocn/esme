@@ -5,29 +5,36 @@ import (
 	"sync"
 )
 
-// HttpQueue http请求的队列
-type HttpQueue struct {
+// MemQueue 内存中的队列
+type MemQueue struct {
 	mux  *sync.Mutex
 	list []*Task
 }
 
-// NewHttpQueue return a http queue obj
-func NewHttpQueue() TodoQueue {
-	return &HttpQueue{
+// NewMemQueue return a memory queue obj
+func NewMemQueue() TodoQueue {
+	return &MemQueue{
 		list: make([]*Task, 0),
 		mux:  &sync.Mutex{},
 	}
 }
 
 // Add 添加一个任务
-func (q *HttpQueue) Add(task *Task) {
+func (q *MemQueue) Add(task *Task) {
 	q.mux.Lock()
 	defer q.mux.Unlock()
 	q.list = append(q.list, task)
 }
 
+// AddTasks 一次添加多个任务
+func (q *MemQueue) AddTasks(list []*Task) {
+	q.mux.Lock()
+	defer q.mux.Unlock()
+	q.list = append(q.list, list...)
+}
+
 // Pop 弹出第并获取第一条
-func (q *HttpQueue) Pop() *Task {
+func (q *MemQueue) Pop() *Task {
 	q.mux.Lock()
 	defer q.mux.Unlock()
 
@@ -41,7 +48,7 @@ func (q *HttpQueue) Pop() *Task {
 }
 
 // Clear 清理所有
-func (q *HttpQueue) Clear() bool {
+func (q *MemQueue) Clear() bool {
 	if q.IsEmpty() {
 		return false
 	}
@@ -55,7 +62,7 @@ func (q *HttpQueue) Clear() bool {
 
 // IsEmpty 是否为空
 //	return bool
-func (q *HttpQueue) IsEmpty() bool {
+func (q *MemQueue) IsEmpty() bool {
 	if len(q.list) == 0 {
 		return true
 	}
@@ -63,11 +70,11 @@ func (q *HttpQueue) IsEmpty() bool {
 }
 
 // Size 返回长度
-func (q *HttpQueue) Size() int {
+func (q *MemQueue) Size() int {
 	return len(q.list)
 }
 
 // Print 打印输出
-func (q *HttpQueue) Print() {
+func (q *MemQueue) Print() {
 	fmt.Println(q.list)
 }
