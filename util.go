@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Str2Int64 str convert to int64
 func Str2Int64(s string) int64 {
 	i64, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
@@ -16,6 +17,7 @@ func Str2Int64(s string) int64 {
 	return i64
 }
 
+// GetFuncName 通过反射的方式返回函数名字
 func GetFuncName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }

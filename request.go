@@ -25,8 +25,10 @@ const (
 	defaultUserAgent   = "Go-http-client/esme/1.0"
 )
 
+// Header esme.Header
 type Header map[string]string
 
+// FormData esme.FormData
 type FormData map[string]string
 
 func (h Header) haveObj() {
@@ -69,7 +71,6 @@ func HttpPut(url string, data []byte, vs ...interface{}) *Context {
 }
 
 // DoRequest 执行一个请求
-//	不能执行回调
 //	返回 Context
 func DoRequest(url, method string, vs ...interface{}) *Context {
 	ctx, err := NewRequest(url, method, vs...)
@@ -95,7 +96,6 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 		return nil, errU
 	}
 	req, err := http.NewRequest(method, u, nil)
-
 	for _, v := range vs {
 		switch vv := v.(type) {
 		case FormData:
@@ -128,11 +128,9 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 
 // NewContext returns new Context
 func NewContext(req *http.Request, vs ...interface{}) *Context {
-
 	var (
 		client *http.Client
 	)
-
 	for _, v := range vs {
 		switch vv := v.(type) {
 		case http.Header:
@@ -178,7 +176,6 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			}
 		}
-
 	}
 
 	if client == nil {

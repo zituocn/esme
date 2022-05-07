@@ -9,7 +9,7 @@ var (
 	proxyLib = NewProxyLib()
 )
 
-func Add() {
+func add() {
 	for i := 0; i < 100; i++ {
 		proxyLib.Add(
 			&ProxyIP{
@@ -23,7 +23,7 @@ func Add() {
 }
 
 func Test_ProxyLibGet(t *testing.T) {
-	Add()
+	add()
 	for i := 0; i < 10; i++ {
 		ip, n := proxyLib.Get()
 		fmt.Println(ip, n)

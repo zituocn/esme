@@ -1,5 +1,7 @@
 /*
 context.go
+sam
+2022-04-25
 */
 
 package esme
@@ -62,11 +64,15 @@ type Context struct {
 	// 请求返回的[]byte
 	RespBody []byte
 
+	// Param 上下文参数传递
 	Param map[string]interface{}
 
 	sleepTime time.Duration
 
 	isDebug bool
+
+	// 执行时间
+	execTime time.Duration
 }
 
 // Do 执行当前请求
@@ -78,8 +84,8 @@ func (c *Context) Do() {
 
 	if c.Request.Body != nil {
 		bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
+		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
-	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	// 休眠
 	if c.sleepTime > 0 {
@@ -87,7 +93,12 @@ func (c *Context) Do() {
 	}
 
 	// 执行开始请求的回调
-	c.startFunc(c)
+	if c.startFunc != nil {
+		c.startFunc(c)
+	}
+
+	// 开始时间
+	startTime := time.Now()
 
 	// 开始执行请求
 	c.Response, c.Err = c.client.Do(c.Request)
@@ -95,6 +106,7 @@ func (c *Context) Do() {
 		logx.Errorf("请求出错: %v", c.Err)
 		return
 	}
+	c.execTime = time.Now().Sub(startTime)
 
 	defer func(c *Context) {
 		if c.Response != nil {
@@ -129,12 +141,14 @@ func (c *Context) Do() {
 				c.succeedFunc(c)
 			}
 		case "retry":
+			// 重试的回调
 			if c.retryFunc != nil {
 				logx.Warnf("[%s] callback -> %s", status, GetFuncName(c.retryFunc))
 				c.retryFunc(c)
 				c.Do()
 			}
 		case "fail":
+			// 失败的回调
 			if c.failedFunc != nil {
 				logx.Errorf("[%s] callback -> %s", status, GetFuncName(c.failedFunc))
 				c.failedFunc(c)
@@ -145,14 +159,15 @@ func (c *Context) Do() {
 
 	}
 
+	// 执行请求完成的回调
+	if c.completeFunc != nil {
+		c.completeFunc(c)
+	}
+
 	// isDebug print
 	if c.isDebug {
 		c.debugPrint()
 	}
-
-	// 执行请求完成的回调
-	c.completeFunc(c)
-
 }
 
 // SetIsDebug 设置是否打印debug信息
@@ -210,9 +225,9 @@ func (c *Context) SetProxy(httpProxy string) *Context {
 		return c
 	}
 	proxy, _ := url.Parse(httpProxy)
-	c.client.Transport = &http.Transport{
-		Proxy: http.ProxyURL(proxy),
-	}
+	transport := getDefaultTransport()
+	transport.Proxy = http.ProxyURL(proxy)
+	c.client.Transport = transport
 	return c
 }
 
@@ -268,6 +283,11 @@ func (c *Context) ToHTML() string {
 		"&#34;", `"`,
 		"&#39;", "'",
 	).Replace(s)
+}
+
+// GetExecTime 请求的执行时间
+func (c *Context) GetExecTime() time.Duration {
+	return c.execTime
 }
 
 /*
