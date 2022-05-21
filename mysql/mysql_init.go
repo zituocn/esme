@@ -8,10 +8,10 @@ package mysql
 import (
 	"errors"
 	"fmt"
-	"time"
-
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/zituocn/esme/logx"
+	"time"
 )
 
 var (
