@@ -102,17 +102,26 @@ func (c *Context) Do() {
 
 	// 开始执行请求
 	c.Response, c.Err = c.client.Do(c.Request)
+
 	if c.Err != nil {
-		logx.Errorf("请求出错: %v", c.Err)
-		return
+		//context deadline exceeded 时的重试
+		if c.retryFunc != nil {
+			logx.Warnf("[%s] callback -> %s", "deadline", GetFuncName(c.retryFunc))
+			c.retryFunc(c)
+			return
+		} else {
+			logx.Errorf("请求出错: %v", c.Err)
+			return
+		}
 	}
-	c.execTime = time.Now().Sub(startTime)
 
 	defer func(c *Context) {
 		if c.Response != nil {
 			c.Response.Body.Close()
 		}
 	}(c)
+
+	c.execTime = time.Now().Sub(startTime)
 
 	// gzip decode
 	if c.Response.Header.Get("Content-Encoding") == "gzip" {
@@ -130,6 +139,7 @@ func (c *Context) Do() {
 		body, err := ioutil.ReadAll(c.Response.Body)
 		if err != nil {
 			logx.Errorf("read response body error : %v", err)
+			logx.Debugf("task:", c.Task)
 			return
 		}
 		c.RespBody = body

@@ -27,4 +27,7 @@ type Task struct {
 
 	// header *http.Header
 	Header *http.Header `json:"header"`
+
+	// Data 上下文数据传递
+	Data map[string]interface{}
 }

@@ -18,7 +18,7 @@ type ProxyLib struct {
 	len int
 }
 
-// NewProxyLib reutrn new proxylib
+// NewProxyLib return  new ProxyLib
 func NewProxyLib() *ProxyLib {
 	return &ProxyLib{
 		ips: make([]string, 0),
@@ -28,7 +28,7 @@ func NewProxyLib() *ProxyLib {
 	}
 }
 
-// Add add proxyIP to ProxyLib
+// Add  proxyIP to ProxyLib
 func (p *ProxyLib) Add(proxyIP *ProxyIP) {
 	p.ips = append(p.ips, proxyIP.String())
 	p.len++

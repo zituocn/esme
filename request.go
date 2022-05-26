@@ -8,12 +8,13 @@ package esme
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/cookiejar"
 	burl "net/url"
+	"strings"
 	"time"
 
 	"github.com/zituocn/esme/logx"
@@ -102,24 +103,25 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 			if len(vv) > 0 {
 				formData := burl.Values{}
 				for k, v := range vv {
-					formData.Add(k, v)
+					formData.Set(k, v)
 				}
-				req, err = http.NewRequest(method, u, bytes.NewBuffer([]byte(formData.Encode())))
+				req, err = http.NewRequest(method, u, strings.NewReader(formData.Encode()))
 				if err != nil {
 					return nil, err
 				}
 			}
 		case []byte:
 			{
-				req, err = http.NewRequest(method, u, bytes.NewReader(vv))
-				if err != nil {
-					return nil, err
+				if len(vv) > 0 {
+					req, err = http.NewRequest(method, u, bytes.NewReader(vv))
+					if err != nil {
+						return nil, err
+					}
+					req.ContentLength = int64(len(vv))
 				}
 			}
 		default:
-
 		}
-
 	}
 	req.Header = http.Header{}
 	ctx := NewContext(req, vs...)
@@ -130,9 +132,12 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 func NewContext(req *http.Request, vs ...interface{}) *Context {
 	var (
 		client *http.Client
+		task   *Task
 	)
 	for _, v := range vs {
 		switch vv := v.(type) {
+		case *Task:
+			task = vv
 		case http.Header:
 			for key, values := range vv {
 				for _, value := range values {
@@ -209,6 +214,7 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 	return &Context{
 		client:  client,
 		Request: req,
+		Task:    task,
 		Param:   make(map[string]interface{}),
 	}
 }
@@ -225,16 +231,8 @@ func getDefaultClient() *http.Client {
 
 func getDefaultTransport() *http.Transport {
 	return &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          10,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		DisableKeepAlives:     true,
+		MaxIdleConns:    100,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 }
 
