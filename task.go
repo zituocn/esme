@@ -19,8 +19,8 @@ type Task struct {
 	// Method 请求方法
 	Method string `json:"method"`
 
-	// playload
-	Playload []byte `json:"playload"`
+	// Payload
+	Payload []byte `json:"payload"`
 
 	// FormData
 	FormData FormData `json:"form_data"`

@@ -215,7 +215,7 @@ func NewContext(req *http.Request, vs ...interface{}) *Context {
 		client:  client,
 		Request: req,
 		Task:    task,
-		Param:   make(map[string]interface{}),
+		Data:    make(map[string]interface{}),
 	}
 }
 

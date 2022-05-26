@@ -85,7 +85,7 @@ func (j *Job) Do() {
 				}
 				task := j.queue.Pop()
 				if task != nil {
-					ctx := DoRequest(task.Url, task.Method, task.Header, task.FormData, task.Playload, task)
+					ctx := DoRequest(task.Url, task.Method, task.Header, task.FormData, task.Payload, task)
 
 					ctx.SetStartFunc(j.jobOptions.StartFunc).
 						SetSucceedFunc(j.jobOptions.SucceedFunc).

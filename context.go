@@ -65,7 +65,7 @@ type Context struct {
 	RespBody []byte
 
 	// Param 上下文参数传递
-	Param map[string]interface{}
+	Data map[string]interface{}
 
 	sleepTime time.Duration
 
@@ -82,6 +82,7 @@ func (c *Context) Do() {
 		err       error
 	)
 
+	// set request body
 	if c.Request.Body != nil {
 		bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
