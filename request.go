@@ -29,9 +29,6 @@ const (
 // Header esme.Header
 type Header map[string]string
 
-// FormData esme.FormData
-type FormData map[string]string
-
 func (h Header) haveObj() {
 	if h == nil {
 		h = Header{}
@@ -50,11 +47,16 @@ func (h Header) Delete(key string) Header {
 	return h
 }
 
+// Cookie esme.Cookie
 type Cookie struct {
 	Name     string
 	Value    string
 	HttpOnly bool
 }
+
+// FormData esme.FormData
+type FormData map[string]string
+
 
 // HttpGet 执行一个http get请求
 func HttpGet(url string, vs ...interface{}) *Context {

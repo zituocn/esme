@@ -22,7 +22,7 @@ go get -u github.com/zituocn/esme
 
 ### 3. 简单的HTTP请求
 
-一个 http get请求的演示代码
+一个 `http get` 请求的演示代码
 
 *demo code*
 
@@ -31,12 +31,13 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/zituocn/esme"
 )
 
 func main() {
 
-    // 请求一个天气预报的接口
+	// 请求一个天气预报的接口
 	ctx := esme.HttpGet("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD")
 
 	// 成功的回调
@@ -51,9 +52,13 @@ func main() {
 		fmt.Println("返回值 :", c.ToString())
 	})
 
-    // 执行请求
+	// 设置http代理
+	ctx.SetProxy("http://10.10.10.10:8888")
+
+	// 执行请求
 	ctx.Do()
 }
+
 ```
 
 *返回值*
@@ -132,9 +137,11 @@ func main() {
 2. [使用 `redis` 任务队列](./docs/job.md)
 3. [在任务队列中，使用 `代理IP池` (多个代理IP使用)](./docs/proxy.md)
 4. [和 `goquery`库的配合使用](./docs/html.md)
-5. [把数据存储到 `mysql` 中](./docs/db.md)
+5. [和 `gjson` 库的配合使用](./doc/gjson.md)
+6. [把数据存储到 `mysql` 中](./docs/db.md)
 
-### 6. 感谢&&参考
-
+### 6. 感谢
 
 * [gathertool](https://github.com/mangenotwork/gathertool)
+* [gorm](https://gorm.io/)
+* [go-redis](https://github.com/go-redis/redis)

@@ -1,3 +1,9 @@
+/*
+queue_mem.go
+内存队列实现
+sam
+ */
+
 package esme
 
 import (

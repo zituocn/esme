@@ -118,7 +118,10 @@ func (c *Context) Do() {
 
 	defer func(c *Context) {
 		if c.Response != nil {
-			c.Response.Body.Close()
+			err=c.Response.Body.Close()
+			if err!=nil{
+				logx.Errorf("response body close error:%s",err.Error())
+			}
 		}
 	}(c)
 

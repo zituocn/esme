@@ -32,9 +32,9 @@ func NewProxyIP(ip string, port int, user, pass string, isTls bool) *ProxyIP {
 
 // String return http proxy string
 func (p *ProxyIP) String() string {
-	scheme := "http://"
+	scheme := "http"
 	if p.IsTLS {
-		scheme = "https://"
+		scheme = "https"
 	}
-	return fmt.Sprintf("%s%s:%s@%s:%d", scheme, p.User, p.Pass, p.IP, p.Port)
+	return fmt.Sprintf("%s://%s:%s@%s:%d", scheme, p.User, p.Pass, p.IP, p.Port)
 }
