@@ -1,6 +1,6 @@
 /*
 queue_redis.go
-redis中的任务队列实现
+task queue implementation in redis
 sam
 2022-04-25
 */
@@ -20,7 +20,7 @@ var (
 	ctx = context.Background()
 )
 
-// RedisQueue redis中的任务队列
+// RedisQueue task queue in redis
 type RedisQueue struct {
 
 	// redis list key
@@ -30,7 +30,7 @@ type RedisQueue struct {
 	rdb *redis.Client
 }
 
-// NewRedisQueue 使用redis配置
+// NewRedisQueue use redis configuration
 func NewRedisQueue(key string, rc *goredis.RedisConfig) TodoQueue {
 	err := goredis.InitDefaultDB(rc)
 	if err != nil {
@@ -44,33 +44,33 @@ func NewRedisQueue(key string, rc *goredis.RedisConfig) TodoQueue {
 	}
 }
 
-// Add 添加一个任务到队列中
+// Add add a task to the queue
 func (q *RedisQueue) Add(task *Task) {
 	b, err := json.Marshal(task)
 	if err != nil {
-		logx.Errorf("序列化任务失败 : %v", err)
+		logx.Errorf("serialization task failed : %v", err)
 		return
 	}
 	err = q.rdb.RPush(ctx, q.key, string(b)).Err()
 	if err != nil {
-		logx.Errorf("向队列添加任务失败 : %v", err)
+		logx.Errorf("failed to add task to queue : %v", err)
 		return
 	}
 }
 
-// AddTasks 添加多个任务到队列中
+// AddTasks add multiple tasks to the queue
 func (q *RedisQueue) AddTasks(list []*Task) {
 	for _, item := range list {
 		q.Add(item)
 	}
 }
 
-// Pop 到一个任务，同时从队列中移出它
-//	从队列的左侧pop元素
+// Pop get a task while removing it from the queue
+//	from left
 func (q *RedisQueue) Pop() *Task {
 	s, err := q.rdb.LPop(ctx, q.key).Result()
 	if err != nil && err != redis.Nil {
-		logx.Errorf("Pop失败 : %v", err)
+		logx.Errorf("pop failed : %v", err)
 		return nil
 	}
 	if len(s) == 0 {
@@ -80,17 +80,17 @@ func (q *RedisQueue) Pop() *Task {
 
 	err = json.Unmarshal([]byte(s), &task)
 	if err != nil {
-		logx.Errorf("返回序列化任务失败: %v", err)
+		logx.Errorf("return serialization task failure: %s", err.Error())
 		return nil
 	}
 	return task
 }
 
-// Clear 清理掉所有任务
+// Clear clear all tasks
 func (q *RedisQueue) Clear() bool {
 	i, err := q.rdb.Del(ctx, q.key).Result()
 	if err != nil {
-		logx.Errorf("Clear : %v", err)
+		logx.Errorf("Clear: %s", err.Error())
 		return false
 	}
 	if i > 0 {
@@ -99,7 +99,7 @@ func (q *RedisQueue) Clear() bool {
 	return false
 }
 
-// IsEmpty 返回队列是否为空
+// IsEmpty returns whether the queue is empty
 func (q *RedisQueue) IsEmpty() bool {
 	if q.Size() == 0 {
 		return true
@@ -107,7 +107,7 @@ func (q *RedisQueue) IsEmpty() bool {
 	return false
 }
 
-// Size 返回队列的长度
+// Size returns queue length
 func (q *RedisQueue) Size() int {
 	i, err := q.rdb.LLen(ctx, q.key).Result()
 	if err != nil {

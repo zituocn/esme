@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 )
 
-// ProxyLib
+// ProxyLib http proxy lib
 type ProxyLib struct {
 	mux *sync.Mutex
 	ips []string

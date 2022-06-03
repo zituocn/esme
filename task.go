@@ -1,7 +1,7 @@
 /*
 task.go
-http 任务
-
+http task
+2022-04-25
 */
 
 package esme
@@ -13,21 +13,21 @@ import (
 // Task http Task
 type Task struct {
 
-	// Url 请求地址
+	// Url request address
 	Url string `json:"url"`
 
-	// Method 请求方法
+	// Method request method
 	Method string `json:"method"`
 
-	// Payload
+	// Payload request payload
 	Payload []byte `json:"payload"`
 
-	// FormData
+	// FormData request formData
 	FormData FormData `json:"form_data"`
 
 	// header *http.Header
 	Header *http.Header `json:"header"`
 
-	// Data 上下文数据传递
+	// Data Contextual data passing
 	Data map[string]interface{}
 }

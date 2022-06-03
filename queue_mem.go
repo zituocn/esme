@@ -2,7 +2,7 @@
 queue_mem.go
 内存队列实现
 sam
- */
+*/
 
 package esme
 
@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// MemQueue 内存中的队列
+// MemQueue in-memory queue
 type MemQueue struct {
 	mux  *sync.Mutex
 	list []*Task
@@ -25,21 +25,21 @@ func NewMemQueue() TodoQueue {
 	}
 }
 
-// Add 添加一个任务
+// Add add a task
 func (q *MemQueue) Add(task *Task) {
 	q.mux.Lock()
 	defer q.mux.Unlock()
 	q.list = append(q.list, task)
 }
 
-// AddTasks 一次添加多个任务
+// AddTasks add multiple tasks at once
 func (q *MemQueue) AddTasks(list []*Task) {
 	q.mux.Lock()
 	defer q.mux.Unlock()
 	q.list = append(q.list, list...)
 }
 
-// Pop 弹出第并获取第一条
+// Pop get the first task
 func (q *MemQueue) Pop() *Task {
 	q.mux.Lock()
 	defer q.mux.Unlock()
@@ -53,7 +53,7 @@ func (q *MemQueue) Pop() *Task {
 	return first
 }
 
-// Clear 清理所有
+// Clear clear queue
 func (q *MemQueue) Clear() bool {
 	if q.IsEmpty() {
 		return false
@@ -66,7 +66,7 @@ func (q *MemQueue) Clear() bool {
 	return true
 }
 
-// IsEmpty 是否为空
+// IsEmpty is empty
 //	return bool
 func (q *MemQueue) IsEmpty() bool {
 	if len(q.list) == 0 {
@@ -75,12 +75,12 @@ func (q *MemQueue) IsEmpty() bool {
 	return false
 }
 
-// Size 返回长度
+// Size returns queue length
 func (q *MemQueue) Size() int {
 	return len(q.list)
 }
 
-// Print 打印输出
+// Print print
 func (q *MemQueue) Print() {
 	fmt.Println(q.list)
 }

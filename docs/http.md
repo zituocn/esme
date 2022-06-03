@@ -1,10 +1,10 @@
 # http 请求参数和响应处理
 
 
-### 一个简单的HTTP请求
+### HTTP 请求
 
 
-*demo code*
+*main.go*
 
 ```go
 package main
@@ -12,23 +12,13 @@ package main
 import (
 	"fmt"
 	"net/http"
-
 	"github.com/zituocn/esme"
 )
 
 func main() {
 
-	// 自定义header
-	header := &http.Header{}
-	header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
-	header.Set("Content-Type", "application/json")
-
-	// 设置payload
-	body := `{"username":"testname","password":"1234567890"}`
-	payLoad := []byte(body)
-
 	// 请求一个天气预报的接口
-	ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", header, payLoad)
+	ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD")
 
 	// 成功的回调
 	ctx.SetSucceedFunc(func(c *esme.Context) {
@@ -42,26 +32,37 @@ func main() {
 		fmt.Println("返回值 :", c.ToString())
 	})
 
-	// 设置http代理
-	ctx.SetProxy("http://10.10.10.10:8888")
-
 	// 执行请求
 	ctx.Do()
 }
 
 ```
 
+#### 设置 header
+
+```go
+header := &http.Header{}
+header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
+header.Set("Content-Type", "application/json")
+ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", header)
+```
+
+#### 设置payload
+
+```go
+body := `{"username":"testname","password":"1234567890"}`
+payLoad := []byte(body)
+ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", payLoad)
+```
+
 #### 设置FormData
 
 ```go
 
-	// 设置formData
-	formData := make(esme.FormData)
-	formData["username"] = "testname"
-	formData["password"] = "1234567890"
-
-	// 请求一个天气预报的接口
-	ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", header, formData)
+formData := make(esme.FormData)
+formData["username"] = "testname"
+formData["password"] = "1234567890"
+ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", formData)
 ```
 
 
@@ -71,28 +72,94 @@ func main() {
 一个cookie值
 
 ```go
-	cookie := &http.Cookie{
-		Name:  "token",
-		Value: "cookie value",
-	}
-	ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", header, cookie)
-
+cookie := &http.Cookie{
+	Name:  "name",
+	Value: "value",
+}
+ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", cookie)
 ```
 
 多个cookie值 
 
 ```go
-	cookie := make([]*esme.Cookie, 0)
-	cookie = append(cookie, &esme.Cookie{
-		Name:  "token",
-		Value: "cookie value",
-	})
+cookie := make([]*esme.Cookie, 0)
+cookie = append(cookie, &esme.Cookie{
+	Name:  "name",
+	Value: "value",
+})
 
-	// 请求一个天气预报的接口
-	ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", header, cookie)
+ctx := esme.HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD", cookie)
 
 ```
 
+#### 设置http代理
+
+```go
+ctx.SetProxy("http://10.10.10.10:8888")
+```
+
+#### 使用回调函数
+
+请求开始的回调
+
+```go
+func (c *Context) SetStartFunc(fn CallbackFunc) *Context 
+
+```
+
+请求完成的回调
+
+```go
+func (c *Context) SetCompleteFunc(fn CallbackFunc) *Context
+```
+
+请求成功的回调
+
+```go
+func (c *Context) SetSucceedFunc(fn CallbackFunc) *Context 
+```
+
+请求失败的回调
+
+```go
+
+func (c *Context) SetFailedFunc(fn CallbackFunc) *Context 
+```
+
+需要重试的回调
+
+```go
+func (c *Context) SetRetryFunc(fn CallbackFunc) *Context
+
+```
+
+#### 设置http.client的transport
+
+```go
+func (c *Context) SetTransport(f func() *http.Transport) *Context 
+
+```
+
+演示代码
+
+```go
+ctx := HttpPost("https://tenapi.cn/wether/?city=%E6%88%90%E9%83%BD")
+
+ctx.SetTransport(func() *http.Transport {
+	return &http.Transport{
+		MaxIdleConns:    100,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+})
+```
+
+---
+
+### 响应处理
+
+TODO:
+
+---
 
 ### 更多文档
 

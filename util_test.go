@@ -11,3 +11,10 @@ func Test_GetRandSleepTime(t *testing.T) {
 	fmt.Println(GetRandSleepTime(1, 100))
 	fmt.Println(GetRandSleepTime(0, -1))
 }
+
+func Test_GetFuncName(t *testing.T) {
+	fmt.Println(GetFuncName(func(c *Context) {
+
+	}))
+
+}

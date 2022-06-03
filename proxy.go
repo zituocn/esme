@@ -1,6 +1,7 @@
 /*
 proxy.go
-http代理
+sam
+2022-04-25
 */
 
 package esme
@@ -9,7 +10,7 @@ import (
 	"fmt"
 )
 
-// ProxyIP 代理IP结构体
+// ProxyIP proxy ip struct
 //	http proxy
 type ProxyIP struct {
 	IP    string

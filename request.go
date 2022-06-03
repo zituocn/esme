@@ -57,28 +57,27 @@ type Cookie struct {
 // FormData esme.FormData
 type FormData map[string]string
 
-
-// HttpGet 执行一个http get请求
+// HttpGet start an http GET request
 func HttpGet(url string, vs ...interface{}) *Context {
 	return DoRequest(url, "GET", vs...)
 }
 
-// HttpPost 执行一个http post请求
+// HttpPost start an http POST request
 func HttpPost(url string, vs ...interface{}) *Context {
 	return DoRequest(url, "POST", vs...)
 }
 
-// HttpPut 执行一个http put请求
+// HttpPut start an http PUT request
 func HttpPut(url string, data []byte, vs ...interface{}) *Context {
 	return DoRequest(url, "PUT", vs...)
 }
 
-// DoRequest 执行一个请求
-//	返回 Context
+// DoRequest start an http request
+//	returns esme.Context
 func DoRequest(url, method string, vs ...interface{}) *Context {
 	ctx, err := NewRequest(url, method, vs...)
 	if err != nil {
-		logx.Errorf("DoRequest 错误 :%v", err)
+		logx.Errorf("DoRequest 错误 :%v", err.Error())
 		return nil
 	}
 	return ctx
@@ -113,15 +112,14 @@ func NewRequest(url, method string, vs ...interface{}) (*Context, error) {
 				}
 			}
 		case []byte:
-			{
-				if len(vv) > 0 {
-					req, err = http.NewRequest(method, u, bytes.NewReader(vv))
-					if err != nil {
-						return nil, err
-					}
-					req.ContentLength = int64(len(vv))
+			if len(vv) > 0 {
+				req, err = http.NewRequest(method, u, bytes.NewReader(vv))
+				if err != nil {
+					return nil, err
 				}
+				req.ContentLength = int64(len(vv))
 			}
+
 		default:
 		}
 	}

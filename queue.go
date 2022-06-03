@@ -1,31 +1,32 @@
 /*
-队列
 queue.go
+sam
+2022-04-25
 */
 
 package esme
 
-// TodoQueue 实现接口
+// TodoQueue interface
 type TodoQueue interface {
 
-	// Add 向队列中添加元素
+	// Add add an element to the queue
 	Add(task *Task)
 
-	// AddTasks 一次向队列中添加多个元素
+	// AddTasks Add multiple elements to the queue at once
 	AddTasks(list []*Task)
 
-	// Pop 弹出并返回一个元素
+	// Pop pop and return an element
 	Pop() *Task
 
-	// Clear 清空队列
+	// Clear empty the queue
 	Clear() bool
 
-	// Size 队列长度
+	// Size queue length
 	Size() int
 
-	// IsEmpty 判断是否为空
+	// IsEmpty is empty
 	IsEmpty() bool
 
-	// Print 打印
+	// Print print
 	Print()
 }

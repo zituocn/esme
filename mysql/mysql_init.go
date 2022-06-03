@@ -1,5 +1,5 @@
 /*
-init_conn.go
+mysql_init.go
 mysql配置及连接
 */
 
@@ -8,10 +8,11 @@ package mysql
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/zituocn/esme/logx"
-	"time"
 )
 
 var (
@@ -36,7 +37,7 @@ type DBConfig struct {
 
 func InitDefaultDB(db *DBConfig) (err error) {
 	if db == nil {
-		err = errors.New("[mysql]没有需要init的mysql db")
+		err = errors.New("[mysql] no database to initialize")
 		return
 	}
 	defaultDBName = db.Name
@@ -47,7 +48,7 @@ func InitDefaultDB(db *DBConfig) (err error) {
 
 func InitDB(list []*DBConfig) (err error) {
 	if len(list) == 0 {
-		err = errors.New("[mysql]没有需要init的mysql db")
+		err = errors.New("[mysql] no database to initialize")
 		return
 	}
 	dbs = make(map[string]*gorm.DB, len(list))
@@ -62,7 +63,7 @@ func InitDB(list []*DBConfig) (err error) {
 func GetORM() *gorm.DB {
 	m, ok := dbs[defaultDBName]
 	if !ok {
-		logx.Panic("[DB] 未init，请参照使用说明")
+		logx.Panic("[DB] the database is not initialized, please refer to the instructions for use")
 	}
 	return m
 }
@@ -71,7 +72,7 @@ func GetORM() *gorm.DB {
 func GetORMByName(name string) *gorm.DB {
 	m, ok := dbs[name]
 	if !ok {
-		logx.Panic("[DB] 未init，请参照使用说明")
+		logx.Panic("[DB] the database is not initialized, please refer to the instructions for use")
 	}
 	return m
 }
@@ -83,7 +84,7 @@ func newORM(db *DBConfig) {
 		err error
 	)
 	if db.User == "" || db.Password == "" || db.Host == "" || db.Port == 0 {
-		panic(fmt.Sprintf("[DB]-[%s] 数据库配置信息获取失败", db.Name))
+		panic(fmt.Sprintf("[DB]-[%s] failed to get database configuration", db.Name))
 	}
 
 	str := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", db.User, db.Password, db.Host, db.Port, db.Name) + "?charset=utf8mb4&parseTime=true&loc=Local"
@@ -91,7 +92,7 @@ func newORM(db *DBConfig) {
 		str = str + "&interpolateParams=true"
 	}
 	for orm, err = gorm.Open(dbType, str); err != nil; {
-		logx.Errorf("[DB]-[%v] 连接异常:%v，正在重试: %v", db.Name, err, str)
+		logx.Errorf("[DB]-[%v] connection exception: %retrying: %v", db.Name, err, str)
 		time.Sleep(5 * time.Second)
 		orm, err = gorm.Open(dbType, str)
 	}

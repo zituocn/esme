@@ -9,7 +9,6 @@ package esme
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,13 +18,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tidwall/gjson"
 	"github.com/zituocn/esme/logx"
 )
 
-// CallbackFunc 回调函数
+// CallbackFunc call back func
 type CallbackFunc func(*Context)
 
-// Context 上下文封装
+// Context request and response context
 type Context struct {
 
 	// http client
@@ -37,45 +37,44 @@ type Context struct {
 	// http response
 	Response *http.Response
 
-	//ctx
-	Ctx context.Context
-
 	// error
 	Err error
 
-	// 请求开始的回调
+	// callback for request start
 	startFunc CallbackFunc
 
-	// 成功的回调
+	// callback for successful request
 	succeedFunc CallbackFunc
 
-	// 请求失败的回调
+	// callback for failed request
 	failedFunc CallbackFunc
 
-	// 重试的回调
+	// callback to request try
 	retryFunc CallbackFunc
 
-	// 请求完成的回调
+	// callback for request completion
 	completeFunc CallbackFunc
 
-	// 请求的任务
+	// reqeusted task
 	Task *Task
 
-	// 请求返回的[]byte
+	// RespBody []byte returned by the request
 	RespBody []byte
 
-	// Param 上下文参数传递
+	// Param context parameter
 	Data map[string]interface{}
 
+	// sleepTime sheep time
 	sleepTime time.Duration
 
+	// isDebug debug mode switch
 	isDebug bool
 
-	// 执行时间
+	// execution time
 	execTime time.Duration
 }
 
-// Do 执行当前请求
+// Do execute current request
 func (c *Context) Do() {
 	var (
 		bodyBytes []byte
@@ -88,39 +87,39 @@ func (c *Context) Do() {
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
-	// 休眠
+	// sheep
 	if c.sleepTime > 0 {
 		time.Sleep(c.sleepTime)
 	}
 
-	// 执行开始请求的回调
+	// callback to execute start request
 	if c.startFunc != nil {
 		c.startFunc(c)
 	}
 
-	// 开始时间
+	// start time
 	startTime := time.Now()
 
-	// 开始执行请求
+	// start executing the request
 	c.Response, c.Err = c.client.Do(c.Request)
 
 	if c.Err != nil {
-		//context deadline exceeded 时的重试
+		//context deadline exceeded retry
 		if c.retryFunc != nil {
 			logx.Warnf("[%s] callback -> %s", "deadline", GetFuncName(c.retryFunc))
 			c.retryFunc(c)
 			return
 		} else {
-			logx.Errorf("请求出错: %v", c.Err)
+			logx.Errorf("请求出错: %s", c.Err.Error())
 			return
 		}
 	}
 
 	defer func(c *Context) {
 		if c.Response != nil {
-			err=c.Response.Body.Close()
-			if err!=nil{
-				logx.Errorf("response body close error:%s",err.Error())
+			err = c.Response.Body.Close()
+			if err != nil {
+				logx.Errorf("response body close error: %s", err.Error())
 			}
 		}
 	}(c)
@@ -131,7 +130,7 @@ func (c *Context) Do() {
 	if c.Response.Header.Get("Content-Encoding") == "gzip" {
 		c.Response.Body, err = gzip.NewReader(c.Response.Body)
 		if err != nil {
-			logx.Errorf("unzip failed :%v", err)
+			logx.Errorf("unzip failed: %s", err.Error())
 			return
 		}
 	}
@@ -142,27 +141,27 @@ func (c *Context) Do() {
 		status := GetStatusCodeString(code)
 		body, err := ioutil.ReadAll(c.Response.Body)
 		if err != nil {
-			logx.Errorf("read response body error : %v", err)
-			logx.Debugf("task:", c.Task)
+			logx.Errorf("read response body error: %s", err.Error())
+			logx.Debugf("task: %v", c.Task)
 			return
 		}
 		c.RespBody = body
 		switch status {
 		case "success":
-			// 回调成功函数
+			// callback success function
 			if c.succeedFunc != nil {
 				logx.Infof("[%s] callback -> %s", status, GetFuncName(c.succeedFunc))
 				c.succeedFunc(c)
 			}
 		case "retry":
-			// 重试的回调
+			// callback retry function
 			if c.retryFunc != nil {
 				logx.Warnf("[%s] callback -> %s", status, GetFuncName(c.retryFunc))
 				c.retryFunc(c)
 				c.Do()
 			}
 		case "fail":
-			// 失败的回调
+			// callback failed function
 			if c.failedFunc != nil {
 				logx.Errorf("[%s] callback -> %s", status, GetFuncName(c.failedFunc))
 				c.failedFunc(c)
@@ -173,7 +172,7 @@ func (c *Context) Do() {
 
 	}
 
-	// 执行请求完成的回调
+	// callback completion function
 	if c.completeFunc != nil {
 		c.completeFunc(c)
 	}
@@ -184,56 +183,56 @@ func (c *Context) Do() {
 	}
 }
 
-// SetIsDebug 设置是否打印debug信息
+// SetIsDebug set debug
 func (c *Context) SetIsDebug(isDebug bool) *Context {
 	c.isDebug = isDebug
 	return c
 }
 
-// SetSleepTime 设置http请求的休眠时间
+// SetSleepTime Set sleep time for http requests
 func (c *Context) SetSleepTime(sleepTime int) *Context {
 	c.sleepTime = time.Duration(sleepTime * int(time.Millisecond))
 	return c
 }
 
-// SetTimeOut 设置http请求的超时时间
+// SetTimeOut Set the timeout for http requests
 //	milli second 毫秒
 func (c *Context) SetTimeOut(timeout int) *Context {
 	c.client.Timeout = time.Duration(timeout * int(time.Millisecond))
 	return c
 }
 
-// SetStartFunc 设置请求开始的回调
+// SetStartFunc Set the callback for the start of the request
 func (c *Context) SetStartFunc(fn CallbackFunc) *Context {
 	c.startFunc = fn
 	return c
 }
 
-// SetCompleteFunc 设置请求完成的回调
+// SetCompleteFunc Set the callback for request completion
 func (c *Context) SetCompleteFunc(fn CallbackFunc) *Context {
 	c.completeFunc = fn
 	return c
 }
 
-// SetSucceedFunc 设置成功后的回调
+// SetSucceedFunc Callback after successful setting
 func (c *Context) SetSucceedFunc(fn CallbackFunc) *Context {
 	c.succeedFunc = fn
 	return c
 }
 
-// SetFailedFunc 设置失败后的回调
+// SetFailedFunc Callback after setting failure
 func (c *Context) SetFailedFunc(fn CallbackFunc) *Context {
 	c.failedFunc = fn
 	return c
 }
 
-// SetRetryFunc 设置重试的回调
+// SetRetryFunc Set callback for retry
 func (c *Context) SetRetryFunc(fn CallbackFunc) *Context {
 	c.retryFunc = fn
 	return c
 }
 
-// SetProxy 设置 http 代理
+// SetProxy set http proxy
 func (c *Context) SetProxy(httpProxy string) *Context {
 	if httpProxy == "" {
 		return c
@@ -245,8 +244,8 @@ func (c *Context) SetProxy(httpProxy string) *Context {
 	return c
 }
 
-// SetProxyFunc 设置代理方法
-func (c *Context) SetProxyFunc(f func() *http.Transport) *Context {
+// SetTransport Set the client's Transport
+func (c *Context) SetTransport(f func() *http.Transport) *Context {
 	c.client.Transport = f()
 	return c
 }
@@ -277,6 +276,17 @@ func (c *Context) ToString() string {
 	return ""
 }
 
+// ToSection get json string by path
+//		use:  gjson.Get func
+//		like: ctx.ToSection("body.data")
+func (c *Context) ToSection(path string) string {
+	s := c.ToString()
+	if s != "" {
+		return gjson.Get(s, path).String()
+	}
+	return ""
+}
+
 // ToJSON returns error
 //	response body to struct or map or slice
 func (c *Context) ToJSON(v interface{}) error {
@@ -299,7 +309,7 @@ func (c *Context) ToHTML() string {
 	).Replace(s)
 }
 
-// GetExecTime 请求的执行时间
+// GetExecTime get request execution time
 func (c *Context) GetExecTime() time.Duration {
 	return c.execTime
 }

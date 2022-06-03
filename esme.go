@@ -1,3 +1,9 @@
+/*
+esme.go
+sam
+2022-04-25
+*/
+
 package esme
 
 import (
@@ -6,56 +12,59 @@ import (
 	"github.com/zituocn/esme/logx"
 )
 
-// Job 任务
+// Job job struct
 type Job struct {
 
-	// 任务name 名称
+	// task name
 	name string
 
-	// num 协程数量
+	// num number of goroutines
 	num int
 
-	// queue 等待执行的任务队列
+	// queue queue of tasks waiting to be executed
 	queue TodoQueue
 
-	// jobOptions 任务选项
+	// jobOptions job options
 	jobOptions JobOptions
 }
 
 // JobOptions 任务参数
 type JobOptions struct {
+
+	// StartFunc Callback at start
 	StartFunc CallbackFunc
 
-	// SucceedFunc 成功后的回调
+	// SucceedFunc  Callback after success
 	SucceedFunc CallbackFunc
 
-	// RetryFunc 重试的回调
+	// RetryFunc retry callback
 	RetryFunc CallbackFunc
 
-	// FailedFunc 失败后的回调
+	// FailedFunc callback after failure
 	FailedFunc CallbackFunc
 
-	// CompleteFunc 请求完成的回调
+	// CompleteFunc Callback for request completion
 	CompleteFunc CallbackFunc
 
-	// ProxyIP 代理IP
+	// ProxyIP proxy ip
 	ProxyIP string
 
-	// ProxyLib 代理IP库
+	// ProxyLib proxy ip library
 	ProxyLib *ProxyLib
 
-	// SheepTime http 请求 执行的休眠时间
+	// SheepTime Sleep time for http request execution
+	// millisecond
 	SheepTime int
 
-	// TimeOut http 请求超时时间
-	// 毫秒
+	// TimeOut http request timeout
+	// millisecond
 	TimeOut int
 
 	// 是否打印调试
 	IsDebug bool
 }
 
-// NewJob 返回一个 *Job
+// NewJob returns a  *Job
 func NewJob(name string, num int, queue TodoQueue, options JobOptions) *Job {
 	if num < 1 {
 		num = 1
@@ -68,16 +77,16 @@ func NewJob(name string, num int, queue TodoQueue, options JobOptions) *Job {
 	}
 }
 
-// Do 开始执行任务
+// Do start the job
 func (j *Job) Do() {
 
-	logx.Infof("[%s] 开始执行 -> 协程数: %d ", j.name, j.num)
+	logx.Infof("[%s] start job -> Goroutines : %d ", j.name, j.num)
 
 	var wg sync.WaitGroup
 	for n := 0; n < j.num; n++ {
 		wg.Add(1)
 		go func(i int) {
-			logx.Infof("启动第 %d 个任务", i+1)
+			logx.Infof("start task %d", i+1)
 			defer wg.Done()
 			for {
 				if j.queue.IsEmpty() {
@@ -98,7 +107,7 @@ func (j *Job) Do() {
 						SetProxy(j.jobOptions.ProxyIP).
 						SetProxyLib(j.jobOptions.ProxyLib)
 
-					// 执行请求
+					// execute request
 					ctx.Do()
 				}
 			}
@@ -107,5 +116,5 @@ func (j *Job) Do() {
 	}
 	wg.Wait()
 
-	logx.Infof("任务执行结束")
+	logx.Info("job done")
 }

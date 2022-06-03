@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -17,13 +18,17 @@ func Str2Int64(s string) int64 {
 	return i64
 }
 
-// GetFuncName 通过反射的方式返回函数名字
+// GetFuncName return the function name by reflection
 func GetFuncName(i interface{}) string {
-	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	name := runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	if name != "" {
+		return name[strings.LastIndex(name, "/")+1:]
+	}
+	return ""
 }
 
-// GetRandSleepTime 产生从min到max之间的随机机
-//	包括 min和max
+// GetRandSleepTime Generate random from min to max
+//	including min and max
 func GetRandSleepTime(min, max int) int {
 	if min < 1 {
 		min = 1

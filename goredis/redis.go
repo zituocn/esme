@@ -23,21 +23,21 @@ var (
 	ctx           = context.Background()
 )
 
-// RedisConfig redis 配置
+// RedisConfig redis config
 type RedisConfig struct {
-	Name     string // 连接名
+	Name     string // name
 	DB       int    // redis db num
-	Host     string // 主机
-	Port     int    // 端口
-	Username string // 用户名，如果有
-	Password string // 密码
-	Pool     int    // 连接池大小
+	Host     string // host
+	Port     int    // port
+	Username string // username
+	Password string // password
+	Pool     int    // pool
 }
 
-// InitDefaultDB 根据 rc 配置，初始化一个redis连接
+// InitDefaultDB Initialize a redis connection
 func InitDefaultDB(rc *RedisConfig) (err error) {
 	if rc == nil {
-		err = errors.New("[redis] 没有需要init的配置")
+		err = errors.New("[redis] no configuration to initialize")
 		return
 	}
 
@@ -47,10 +47,10 @@ func InitDefaultDB(rc *RedisConfig) (err error) {
 	return
 }
 
-// InitDB 根据 rcs 配置，初始化多个redis连接
+// InitDB initialize multiple redis connections
 func InitDB(rcs []*RedisConfig) (err error) {
 	if len(rcs) == 0 {
-		err = errors.New("[redis] 没有需要init的配置")
+		err = errors.New("[redis] no configuration to initialize")
 		return
 	}
 	dbs = make(map[string]*redis.Client, len(rcs))
@@ -61,21 +61,20 @@ func InitDB(rcs []*RedisConfig) (err error) {
 	return
 }
 
-// GetRDB 取默认的redis连接
-//	只有一个redis连接时使用
+// GetRDB get the default redis connection
 func GetRDB() *redis.Client {
 	rdb, ok := dbs[defaultDBName]
 	if !ok {
-		logx.Panicf("[redis] 未init，请阅读使用说明: https://github.com/zituocn/esme/goredis/README.md")
+		logx.Panicf("[redis] not initialized, please read the docs: https://github.com/zituocn/esme/goredis/README.md")
 	}
 	return rdb
 }
 
-// GetRDBByName 根据name取一个redis的连接
+// GetRDBByName get a redis connection by name
 func GetRDBByName(name string) *redis.Client {
 	m, ok := dbs[name]
 	if !ok {
-		logx.Panicf("[redis] 未init，请阅读使用说明: https://github.com/zituocn/esme/goredis/README.md")
+		logx.Panicf("[redis] not initialized, please read the docs: https://github.com/zituocn/esme/goredis/README.md")
 	}
 	return m
 }
@@ -93,7 +92,7 @@ func newRedis(rc *RedisConfig) {
 		rdb *redis.Client
 	)
 	if rc.Host == "" || rc.Port == 0 || rc.Name == "" {
-		logx.Panicf("[redis]-[%s] 配置信息获取失败", rc.Name)
+		logx.Panicf("[redis]-[%s] failed to read configuration information", rc.Name)
 		return
 	}
 	if rc.DB < 0 {
@@ -118,7 +117,7 @@ func newRedis(rc *RedisConfig) {
 
 	// COMMAND ping
 	for _, err := rdb.Ping(ctx).Result(); err != nil; {
-		logx.Errorf("[redis]-%s 连接异常: %v", rc.string(), err)
+		logx.Errorf("[redis]-%s connection exception: %s", rc.string(), err.Error())
 		time.Sleep(5 * time.Second)
 	}
 
