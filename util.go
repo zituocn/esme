@@ -2,6 +2,7 @@ package esme
 
 import (
 	"math/rand"
+	"net/http"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -43,4 +44,44 @@ func GetRandSleepTime(min, max int) int {
 	n := rand.Intn(max - min)
 	n = n + min
 	return n
+}
+
+// BuilderHeader convert string headers to http.Header
+func BuilderHeader(s string) *http.Header {
+	header := &http.Header{}
+	if s == "" {
+		return header
+	}
+	s = strings.ReplaceAll(s, "\t", "")
+	lines := strings.Split(s, "\n")
+	for _, line := range lines {
+		line = strings.TrimLeft(line, "")
+		line = strings.TrimRight(line, "")
+		if line != "" {
+			kvs := strings.Split(line, ": ")
+			if len(kvs) == 2 {
+				header.Set(strings.TrimSpace(kvs[0]), strings.TrimSpace(kvs[1]))
+			}
+		}
+	}
+	return header
+}
+
+// BuilderFormData convert string FormData to esme.FormData
+//  page=1&limit=15&id=&nick_name=&mobile=&source_type=-100 to FormData
+func BuilderFormData(s string) FormData {
+	formData := FormData{}
+	if s == "" {
+		return formData
+	}
+	lines := strings.Split(s, "&")
+	for _, line := range lines {
+		if line != "" {
+			kvs := strings.Split(line, "=")
+			if len(kvs) == 2 {
+				formData.Set(kvs[0], kvs[1])
+			}
+		}
+	}
+	return formData
 }

@@ -57,6 +57,10 @@ type Cookie struct {
 // FormData esme.FormData
 type FormData map[string]string
 
+func (f FormData) Set(k, v string) {
+	f[k] = v
+}
+
 // HttpGet start an http GET request
 func HttpGet(url string, vs ...interface{}) *Context {
 	return DoRequest(url, "GET", vs...)

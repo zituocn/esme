@@ -1,11 +1,9 @@
 /*
 status_code.go
 http response status code
- */
+*/
 
 package esme
-
-
 
 type StatusCode map[int]string
 
@@ -31,7 +29,7 @@ var (
 		407: "retry",
 		408: "retry",
 		421: "success",
-		500: "fail",
+		500: "retry",
 		501: "fail",
 		502: "retry",
 		503: "retry",
@@ -41,8 +39,8 @@ var (
 )
 
 func GetStatusCodeString(code int) string {
-	str,ok:=statusCode[code]
-	if ok{
+	str, ok := statusCode[code]
+	if ok {
 		return str
 	}
 	return ""

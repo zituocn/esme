@@ -110,7 +110,7 @@ func (c *Context) Do() {
 			c.retryFunc(c)
 			return
 		} else {
-			logx.Errorf("请求出错: %s", c.Err.Error())
+			logx.Errorf("request error: %s", c.Err.Error())
 			return
 		}
 	}
@@ -277,7 +277,7 @@ func (c *Context) ToString() string {
 }
 
 // ToSection get json string by path
-//		use:  gjson.Get func
+//		use gjson.Get func
 //		like: ctx.ToSection("body.data")
 func (c *Context) ToSection(path string) string {
 	s := c.ToString()
